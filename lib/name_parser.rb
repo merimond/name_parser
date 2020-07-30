@@ -34,7 +34,7 @@ module NameParser
   /xi
 
   LAST_NAME = /
-    (?<last_name_prefix>#{LAST_NAME_PREFIX})?\s?
+    ((?<last_name_prefix>#{LAST_NAME_PREFIX})\s)?
     (?<last_name>#{NAME})
   /x
 

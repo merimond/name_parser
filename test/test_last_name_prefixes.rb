@@ -3,6 +3,14 @@ require 'name_parser'
 
 describe NameParser do
 
+  it "does not split last name when it starts with a prefix" do
+    assert_operator({
+      "first_name"       => "Michael",
+      "last_name"        => "VanJackson",
+      "full_name"        => "Michael VanJackson"
+    }, :<, NameParser.guess("Michael VanJackson"))
+  end
+
   it "parses `van der` prefix" do
     assert_operator({
       "first_name"       => "Michael",
