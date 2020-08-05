@@ -260,6 +260,7 @@ module NameParser
     ].compact.join(" ")
 
     params.delete("repeat")
+    params.delete("hide_preferred")
     params.merge({
       "full_name" => full_name,
       "gender"    => gender
