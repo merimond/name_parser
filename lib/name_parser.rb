@@ -1,5 +1,6 @@
 require 'name_parser/female_names'
 require 'name_parser/male_names'
+require 'name_parser/diminutive_names'
 
 module NameParser
   LETTER = /[[:alpha:]]/
@@ -38,7 +39,7 @@ module NameParser
     (?<last_name>#{NAME})
   /x
 
-  DESIGNATION = /
+  REDUNDANT_DESIGNATIONS = /
     CFA|
     CMA|
     CPA|
@@ -58,6 +59,11 @@ module NameParser
     SPHR
   /x
 
+  DOCTOR_SALUTATION = /
+    Dr\.|
+    Doctor
+  /x
+
   TRANSFORATIONS = []
   FORMATS = []
 
@@ -66,9 +72,46 @@ module NameParser
     ^
     (?<repeat>.+)
     [\s,]+
-    #{DESIGNATION}
+    #{REDUNDANT_DESIGNATIONS}
     $
   /x
+
+  # Michael (Mike) Jackson
+  FORMATS << [/
+    ^
+    (?<first>#{NAME})
+    \s?[\("]\s?
+    (?<alternative>#{NAME})
+    \s?[\)"]\s?
+    (?<rest>.+)
+    $/x, -> (params) {
+    guess_alternative_token({
+      "alternative" => params["alternative"],
+      "repeat"      => [params["first"], params["rest"]].join(" ")
+    })
+  }]
+
+  # Dr. Michael Jackson
+  FORMATS << [/
+    ^
+    #{DOCTOR_SALUTATION}
+    \s
+    (?<repeat>.+)
+    $
+  /x, -> (params) {
+    params.merge("salutation" => "Dr.")
+  }]
+
+  # Michael Jackson, Dr.
+  FORMATS << [/
+    ^
+    (?<repeat>.+)
+    [\s,]+
+    #{DOCTOR_SALUTATION}
+    $
+  /x, -> (params) {
+    params.merge("salutation" => "Dr.")
+  }]
 
   # Michael Jackson
   FORMATS << [/
@@ -120,7 +163,10 @@ module NameParser
     #{LAST_NAME}
     $
   /x, -> (params) {
-    params.merge("preferred_name" => params["middle_names"])
+    params.merge({
+      "preferred_name" => params["middle_names"],
+      "hide_preferred" => true
+    })
   }]
 
   # Jackson, J. Michael
@@ -131,7 +177,10 @@ module NameParser
     (?<middle_names>#{NAME})
     $
   /x, -> (params) {
-    params.merge("preferred_name" => params["middle_names"])
+    params.merge({
+      "preferred_name" => params["middle_names"],
+      "hide_preferred" => true
+    })
   }]
 
   # Michael Joseph Jackson
@@ -177,9 +226,10 @@ module NameParser
 
     name = name
       .strip
-      .gsub(/\s+/, " ")
-      .gsub(/\s+,/, ",")
-      .gsub(/,$/, "")
+      .gsub(/\s+/, " ")    # Squash multiple spaces
+      .gsub(/\s+,/, ",")   # Remove space before comma
+      .gsub(/\s\.\s/, " ") # Remove orphaned dot
+      .gsub(/,$/, "")      # Remove trailing comma
 
     TRANSFORATIONS.each do |fmt|
       next unless match = name.match(fmt)
@@ -192,10 +242,17 @@ module NameParser
   def self.postprocess(params)
     gender = nil ||
       guess_gender(params["first_name"]) ||
-      guess_gender(params["preferred_first_name"])
+      guess_gender(params["preferred_name"])
+
+    # When middle name is used as the preferred name, we don't want to show it
+    # separately in paranthesis, since it's already displayed as middle.
+    # e.g. M. Joseph Jackson
+    preferred = params["hide_preferred"] ? nil : params["preferred_name"]
 
     full_name = [
+      params["salutation"],
       params["first_name"],
+      preferred ? "(#{preferred})" : nil,
       params["middle_names"],
       params["last_name_prefix"],
       params["last_name"],
@@ -225,6 +282,7 @@ module NameParser
 
       tokens = match.named_captures
       tokens = block.call(tokens) if block.is_a?(Proc)
+      return nil if tokens.nil?
 
       repeat = tokens["repeat"]
       tokens = params.merge(tokens)
@@ -234,6 +292,35 @@ module NameParser
         postprocess(tokens)
     end
 
+    nil
+  end
+
+  def self.guess_alternative_token(params)
+    unless token = params.delete("alternative")
+      return params
+    end
+
+    if DIMINUTIVE_NAMES.include?(token.downcase)
+      return params.merge({ "preferred_name" => token.capitalize })
+    end
+
+    if token.match(/[A-Z]{2}/)
+      return params.merge({ "preferred_name" => token })
+    end
+
+    # Here're some cases that require further investigation.
+    # They will currently fail to parse:
+    #
+    # [1] Names from non-Engligh natives:
+    #   - Zhaoxuan("Charles") Yang
+    #   - Doris (Yiyang) Guo
+    # [2] Simplified names:
+    #   - Greg (Grygorii) Yefremov
+    # [3] Alternative last names for ladies
+    #   - Celestine (Johnson) Schnugg
+    # [4] Simple alternative names:
+    #   - Yuliya (Julia) Gudish
+    #   - Jack (John) Chimento
     nil
   end
 

@@ -39,11 +39,11 @@ describe NameParser do
 
   it "parses first name initial in reverse format" do
     assert_operator({
-      "first_name"     => "J.",
-      "preferred_name" => "Michael",
+      "first_name"     => "M.",
+      "preferred_name" => "Joseph",
       "last_name"      => "Jackson",
-      "full_name"      => "J. Michael Jackson"
-    }, :<, NameParser.guess("Jackson, J. Michael"))
+      "full_name"      => "M. Joseph Jackson"
+    }, :<, NameParser.guess("Jackson, M. Joseph"))
   end
 
 end
