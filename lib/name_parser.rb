@@ -85,6 +85,21 @@ module NameParser
     \s?[\)"]\s?
     (?<rest>.+)
     $/x, -> (params) {
+      guess_alternative_token({
+      "alternative" => params["alternative"],
+      "repeat"      => [params["first"], params["rest"]].join(" ")
+    })
+  }]
+
+  # Mike (Michael) Jackson
+  FORMATS << [/
+    ^
+    (?<alternative>#{NAME})
+    \s?[\("]\s?
+    (?<first>#{NAME})
+    \s?[\)"]\s?
+    (?<rest>.+)
+    $/x, -> (params) {
     guess_alternative_token({
       "alternative" => params["alternative"],
       "repeat"      => [params["first"], params["rest"]].join(" ")
@@ -283,14 +298,17 @@ module NameParser
 
       tokens = match.named_captures
       tokens = block.call(tokens) if block.is_a?(Proc)
-      return nil if tokens.nil?
+      next if tokens.nil?
 
       repeat = tokens["repeat"]
       tokens = params.merge(tokens)
 
-      return repeat ?
-        guess(repeat, tokens) :
-        postprocess(tokens)
+      unless repeat
+        return postprocess(tokens)
+      end
+
+      result = guess(repeat, tokens)
+      return result unless result.nil?
     end
 
     nil

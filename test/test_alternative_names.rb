@@ -12,6 +12,15 @@ describe NameParser do
     }, :<, NameParser.guess("Michael (Mike) Jackson"))
   end
 
+  it "parsed reverse alternative name" do
+    assert_operator({
+      "first_name"     => "Michael",
+      "preferred_name" => "Mike",
+      "last_name"      => "Jackson",
+      "full_name"      => "Michael (Mike) Jackson"
+    }, :<, NameParser.guess("Mike (Michael) Jackson"))
+  end
+
   it "parsed alternative name with no spaces" do
     assert_operator({
       "first_name"     => "Michael",
