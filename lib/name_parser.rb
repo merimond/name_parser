@@ -41,17 +41,22 @@ module NameParser
   /x
 
   REDUNDANT_DESIGNATIONS = /
+    ARNP|
     CFA|
     CMA|
     CPA|
     CPESC|
     DVM|
     Esq\.|
+    F\.A\.C\.S\.|
     FACR|
+    LHRM|
     MD|
     M\.D\.|
     MBA|
     M\.B\.A|
+    M\.B\.A\.|
+    M\.P\.H|
     MHSA|
     OBE|
     PE|
@@ -64,6 +69,18 @@ module NameParser
     Dr|
     Dr\.|
     Doctor
+  /x
+
+  MALE_HONORIFIC = /
+    Mr|
+    Mr\.
+  /x
+
+  FEMALE_HONORIFIC = /
+    Ms|
+    Ms\.|
+    Mrs|
+    Mrs\.
   /x
 
   TRANSFORATIONS = []
@@ -106,6 +123,28 @@ module NameParser
       "alternative" => params["alternative"],
       "repeat"      => [params["first"], params["rest"]].join(" ")
     })
+  }]
+
+  # Mr. Michael Jackson
+  FORMATS << [/
+    ^
+    #{MALE_HONORIFIC}
+    \s
+    (?<repeat>.+)
+    $
+  /x, -> (params) {
+    params.merge("gender" => "m")
+  }]
+
+  # Ms. Michael Jackson
+  FORMATS << [/
+    ^
+    #{FEMALE_HONORIFIC}
+    \s
+    (?<repeat>.+)
+    $
+  /x, -> (params) {
+    params.merge("gender" => "f")
   }]
 
   # Dr. Michael Jackson
@@ -257,7 +296,7 @@ module NameParser
   end
 
   def self.postprocess(params)
-    gender = nil ||
+    gender = params["gender"] ||
       guess_gender(params["first_name"]) ||
       guess_gender(params["preferred_name"])
 
