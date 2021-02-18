@@ -7,6 +7,7 @@ module NameParser
   NAME = /[[[:alpha:]]’'-]{2,}/
 
   GENERATIONAL_SUFFIX = /
+    jr|
     Jr|
     Jr\.|
     Sr|
@@ -60,6 +61,7 @@ module NameParser
   /x
 
   DOCTOR_SALUTATION = /
+    Dr|
     Dr\.|
     Doctor
   /x
