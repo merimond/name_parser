@@ -7,11 +7,9 @@ module NameParser
   NAME = /[[[:alpha:]]’'-]{2,}/
 
   GENERATIONAL_SUFFIX = /
-    jr|
-    Jr|
-    Jr\.|
-    Sr|
-    Sr\.|
+    jr|JR|
+    Jr\.?|JR\.?|
+    Sr\.?|SR\.?|
     [IV]{1,3}
   /x
 
@@ -66,21 +64,21 @@ module NameParser
   /x
 
   DOCTOR_SALUTATION = /
-    Dr|
-    Dr\.|
-    Doctor
+    Dr|DR|
+    Dr\.|DR\.|
+    Doctor|DOCTOR
   /x
 
   MALE_HONORIFIC = /
-    Mr|
-    Mr\.
+    Mr|MR|
+    Mr\.|MR\.
   /x
 
   FEMALE_HONORIFIC = /
-    Ms|
-    Ms\.|
-    Mrs|
-    Mrs\.
+    Ms|MS|
+    Ms\.|MS\.|
+    Mrs|MRS|
+    Mrs\.|MRS\.
   /x
 
   TRANSFORATIONS = []

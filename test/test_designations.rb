@@ -19,7 +19,15 @@ describe NameParser do
     }, :<, NameParser.guess("Dr. Michael Jackson"))
   end
 
-  it "skips single designations" do
+  it "recognizes Dr. with all caps" do
+    assert_operator({
+      "first_name" => "MICHAEL",
+      "last_name"  => "JACKSON",
+      "full_name"  => "Dr. MICHAEL JACKSON"
+    }, :<, NameParser.guess("DR. MICHAEL JACKSON"))
+  end
+
+  it "skips single designations at the end" do
     assert_operator({
       "first_name" => "Michael",
       "last_name"  => "Jackson",
