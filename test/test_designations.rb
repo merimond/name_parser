@@ -27,6 +27,22 @@ describe NameParser do
     }, :<, NameParser.guess("Michael Jackson, CFA"))
   end
 
+  it "skips single designations in the middle" do
+    assert_operator({
+      "first_name" => "Michael",
+      "last_name"  => "Jackson",
+      "full_name"  => "Michael Jackson"
+    }, :<, NameParser.guess("Jackson CFA, Michael"))
+  end
+
+  it "skips multiple designations in the middle" do
+    assert_operator({
+      "first_name" => "Michael",
+      "last_name"  => "Jackson",
+      "full_name"  => "Michael Jackson"
+    }, :<, NameParser.guess("Jackson CFA, CPA, Michael"))
+  end
+
   it "skips multiple designations" do
     assert_operator({
       "first_name" => "Michael",

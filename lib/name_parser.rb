@@ -95,6 +95,16 @@ module NameParser
     $
   /x
 
+  # Jackson CFA, Michael
+  FORMATS << [/
+    ^
+    (?<first>.+)
+    #{REDUNDANT_DESIGNATIONS},+
+    (?<second>.+)
+    $/x, -> (params) {
+      { "repeat" => [params["first"], params["second"]].join(",") }
+  }]
+
   # Michael (Mike) Jackson
   FORMATS << [/
     ^
