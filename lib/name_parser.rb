@@ -30,7 +30,8 @@ module NameParser
     di|
     du|
     la|
-    le
+    le|
+    st\.|
   /xi
 
   LAST_NAME = /
@@ -39,28 +40,67 @@ module NameParser
   /x
 
   REDUNDANT_DESIGNATIONS = /
+    ACCA|
     ARNP|
+    B\.ENG\.|
+    B\.COMM\.|
+    B\.?SC\.?|
+    CA|
+    CAIA|
+    CIC|
+    CIPM|
     CFA|
+    CFP|
     CMA|
+    CMT|
     CPA|
+    C\.P\.A\.|
+    CTA|
+    CTP|
     CPESC|
     DVM|
     Esq\.|
     F\.A\.C\.S\.|
     FACR|
+    FPAC|
+    FRM|
+    ICD\.D|
+    JD|
+    J\.D\.|
     LHRM|
+    MA|
+    MBCHB|
     MD|
+    MD\.|
     M\.D\.|
     MBA|
     M\.B\.A|
     M\.B\.A\.|
-    M\.P\.H|
     MHSA|
+    MIPP|
+    MPACC\.?|
+    MPH|
+    M\.P\.H|
+    MS|
+    MSC|
+    MSEE|
+    MST|
     OBE|
     PE|
+    PHARM\.?D\.|
     PhD|
+    PHD|
+    PH\.\s?D\.|
     Ph\.D\.|
     SPHR
+  /x
+
+  REDUNDANT_SALUTATIONS = /
+    Admiral|
+    LT\.\sGENERAL|
+    PROFESSOR|
+    PROF\.|
+    SIR
   /x
 
   DOCTOR_SALUTATION = /
@@ -90,6 +130,15 @@ module NameParser
     (?<repeat>.+)
     [\s,]+
     #{REDUNDANT_DESIGNATIONS}
+    $
+  /x
+
+  # Admiral Michael Jackson
+  TRANSFORATIONS << /
+    ^
+    #{REDUNDANT_SALUTATIONS}
+    [\s,]+
+    (?<repeat>.+)
     $
   /x
 
@@ -283,6 +332,50 @@ module NameParser
     nil
   end
 
+  def self.capitalize_given_name(name)
+    unless name.is_a?(String)
+      return name
+    end
+
+    unless name == name.upcase || name == name.downcase
+      return name
+    end
+
+    if name.size < 3
+      return name # TODO: account for genuine short names, e.g. Ed or Bo
+    end
+
+    name.gsub(/(^|-)([[:alpha:]])([[:alpha:]]+)/) do
+      "#{$1}#{$2.upcase}#{$3.downcase}"
+    end
+  end
+
+  def self.capitalize_prefix(name)
+    unless name.is_a?(String)
+      return name
+    end
+
+    unless name == name.upcase
+      return name
+    end
+
+    name.downcase
+  end
+
+  def self.capitalize_last_name(name)
+    unless name.is_a?(String)
+      return name
+    end
+
+    unless name == name.upcase || name == name.downcase
+      return name
+    end
+
+    name.gsub(/(^|-)([[:alpha:]][’'])?([[:alpha:]])([[:alpha:]]+)/) do
+      "#{$1}#{$2}#{$3.upcase}#{$4.downcase}"
+    end
+  end
+
   def self.preprocess(name)
     unless name.is_a?(String)
       return nil
@@ -294,6 +387,7 @@ module NameParser
       .gsub(/\s+,/, ",")   # Remove space before comma
       .gsub(/\s\.\s/, " ") # Remove orphaned dot
       .gsub(/,$/, "")      # Remove trailing comma
+      .gsub(/[®]/, "")     # Remove BS characters
 
     TRANSFORATIONS.each do |fmt|
       next unless match = name.match(fmt)
@@ -308,6 +402,12 @@ module NameParser
       guess_gender(params["first_name"]) ||
       guess_gender(params["preferred_name"])
 
+    params["first_name"] = capitalize_given_name params["first_name"]
+    params["preferred_name"] = capitalize_given_name params["preferred_name"]
+    params["middle_names"] = capitalize_given_name params["middle_names"]
+    params["last_name_prefix"]= capitalize_prefix params["last_name_prefix"]
+    params["last_name"] = capitalize_last_name params["last_name"]
+  
     # When middle name is used as the preferred name, we don't want to show it
     # separately in paranthesis, since it's already displayed as middle.
     # e.g. M. Joseph Jackson
